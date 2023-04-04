@@ -101,7 +101,7 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
             action = self.logits_na(observation)
         else:
             action = distributions.Normal(loc=self.mean_net(observation), 
-                                          scale=self.logstd.exp())
+                                          scale=self.logstd.exp()).sample()
         return action
 
 
@@ -118,7 +118,8 @@ class MLPPolicySL(MLPPolicy):
             adv_n=None, acs_labels_na=None, qvals=None
     ):
         # TODO: update the policy and return the loss
-        loss = self.loss(actions, self(observations))
+        loss = self.loss(self(ptu.from_numpy(observations)), 
+                         ptu.from_numpy(actions))
         return {
             # You can add extra logging information here, but keep this line
             'Training Loss': ptu.to_numpy(loss),

@@ -55,7 +55,7 @@ def build_mlp(
         MLP.append(activation)
     MLP.append(nn.Linear(size, output_size))
     MLP.append(output_activation)
-    raise nn.Sequential(*MLP)
+    return nn.Sequential(*MLP)
 
 
 device = None

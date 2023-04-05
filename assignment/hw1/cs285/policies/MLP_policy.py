@@ -100,9 +100,23 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         if self.discrete:
             action = self.logits_na(observation)
         else:
-            action = distributions.Normal(loc=self.mean_net(observation), 
-                                          scale=self.logstd.exp()).sample()
+            # This does not work, since the sample function is not differentiable
+            # 
+            # action = distributions.Normal(loc=self.mean_net(observation), 
+            #                               scale=self.logstd.exp()).sample()
+            # 
+
+            # This is from others solution, but not a Gaussian policy
+            # 
             # action = self.mean_net(observation)
+            # 
+
+            # This is a differentiable Gaussian policy, and it works
+            # 
+            mean = self.mean_net(observation)
+            action = np.random.normal(0, 1, size=mean.shape)
+            action = ptu.from_numpy(action)*self.logstd.exp() + mean
+            
         return action
 
 

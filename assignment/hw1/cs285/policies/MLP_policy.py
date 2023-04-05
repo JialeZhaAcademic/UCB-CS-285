@@ -102,6 +102,7 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
         else:
             action = distributions.Normal(loc=self.mean_net(observation), 
                                           scale=self.logstd.exp()).sample()
+            # action = self.mean_net(observation)
         return action
 
 

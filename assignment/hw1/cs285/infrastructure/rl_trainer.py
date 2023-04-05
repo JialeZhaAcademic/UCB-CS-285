@@ -173,6 +173,9 @@ class RL_Trainer(object):
         # HINT1: use sample_trajectories from utils
         # HINT2: you want each of these collected rollouts to be of length self.params['ep_len']
         print("\nCollecting data to be used for training...")
+
+        # The definition of 'min_timesteps_per_batch' or 'batch_size' here is a little confused, 
+        # I use the comman definition that, one batch is for one trajectory
         paths, envsteps_this_batch = utils.sample_trajectories(
             self.env, collect_policy, batch_size*self.params['ep_len'], self.params['ep_len'])
 

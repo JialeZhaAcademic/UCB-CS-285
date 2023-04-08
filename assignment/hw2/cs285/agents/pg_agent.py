@@ -1,4 +1,5 @@
 import numpy as np
+import collections
 
 from .base_agent import BaseAgent
 from cs285.policies.MLP_policy import MLPPolicyPG
@@ -43,6 +44,9 @@ class PGAgent(BaseAgent):
         # using helper functions to compute qvals and advantages, and
         # return the train_log obtained from updating the policy
 
+        q_values = self.calculate_q_vals(rewards_list)
+        advantages = self.estimate_advantage(observations, rewards_list, q_values, terminals)
+        train_log = self.actor.train(observations, actions, advantages, q_values)
         return train_log
 
     def calculate_q_vals(self, rewards_list):
@@ -52,8 +56,8 @@ class PGAgent(BaseAgent):
         """
 
         # TODO: return the estimated qvals based on the given rewards, using
-            # either the full trajectory-based estimator or the reward-to-go
-            # estimator
+        #       either the full trajectory-based estimator or the reward-to-go
+        #       estimator
 
         # Note: rewards_list is a list of lists of rewards with the inner list
         # being the list of rewards for a single trajectory.
@@ -152,16 +156,28 @@ class PGAgent(BaseAgent):
 
             Input: list of rewards {r_0, r_1, ..., r_t', ... r_T} from a single rollout of length T
 
-            Output: list where each index t contains sum_{t'=0}^T gamma^t' r_{t'}
+            Output: list where each index t contains sum_{t'=t}^T gamma^t' r_{t'}
         """
-
-        return list_of_discounted_returns
+        list_of_discounted_returns = collections.deque()
+        prev_rews_sum = 0
+        gamma_t = self.gamma**(len(rewards) + 1)
+        for reward in reversed(rewards):
+            prev_rews_sum += gamma_t * reward
+            list_of_discounted_returns.appendleft(prev_rews_sum)
+            gamma_t /= self.gamma
+        return list(list_of_discounted_returns)
 
     def _discounted_cumsum(self, rewards):
         """
             Helper function which
             -takes a list of rewards {r_0, r_1, ..., r_t', ... r_T},
-            -and returns a list where the entry in each index t' is sum_{t'=t}^T gamma^(t'-t) * r_{t'}
+            -and returns a list where the entry in each index t is sum_{t'=t}^T gamma^(t'-t) * r_{t'}
         """
-
+        list_of_discounted_cumsums = collections.deque()
+        prev_rews_sum = 0
+        gamma_t = self.gamma**(len(rewards) + 1)
+        for reward in reversed(rewards):
+            prev_rews_sum += gamma_t * reward
+            list_of_discounted_cumsums.appendleft(prev_rews_sum/gamma_t)
+            gamma_t /= self.gamma
         return list_of_discounted_cumsums

@@ -10,6 +10,7 @@ from torch import distributions
 
 from cs285.infrastructure import pytorch_util as ptu
 from cs285.policies.base_policy import BasePolicy
+from cs285.infrastructure import utils
 
 
 class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
@@ -135,7 +136,7 @@ class MLPPolicyPG(MLPPolicy):
         # HINT2: you will want to use the `log_prob` method on the distribution returned
             # by the `forward` method
 
-        TODO
+        loss = torch.mean(self(observations).log_prob(actions) * advantages)
 
         if self.nn_baseline:
             ## TODO: update the neural network baseline using the q_values as
@@ -144,8 +145,10 @@ class MLPPolicyPG(MLPPolicy):
 
             ## Note: You will need to convert the targets into a tensor using
                 ## ptu.from_numpy before using it in the loss
-
-            TODO
+            
+            q_values = utils.normalize(q_values, q_values.mean(), q_values.std())
+            loss += self.baseline_loss(
+                self.baseline(observations), ptu.from_numpy(q_values))
 
         train_log = {
             'Training Loss': ptu.to_numpy(loss),

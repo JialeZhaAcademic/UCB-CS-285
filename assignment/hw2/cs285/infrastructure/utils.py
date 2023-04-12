@@ -67,11 +67,15 @@ def sample_trajectory(env, policy, max_path_length, render=False, render_mode=('
 
         # render image of the simulated env
         if render:
-            if hasattr(env, 'sim'):
-                image_obs.append(env.sim.render(
-                    camera_name='track', height=500, width=500)[::-1], render_mode=render_mode)
-            else:
-                image_obs.append(env.render(render_mode=render_mode))
+            if 'rgb_array' in render_mode:
+                if hasattr(env, 'sim'):
+                    image_obs.append(env.sim.render(
+                        camera_name='track', height=500, width=500)[::-1])
+                else:
+                    image_obs.append(env.render(mode=render_mode))
+            if 'human' in render_mode:
+                env.render(mode=render_mode)
+                time.sleep(env.model.opt.timestep)
 
         # use the most recent ob to decide what to do
         obs.append(ob)

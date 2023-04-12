@@ -142,6 +142,12 @@ class MLPPolicyPG(MLPPolicy):
             # by the `forward` method
 
         loss = torch.mean(self(observations).log_prob(actions) * advantages)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        train_log = {
+            'Training Loss': ptu.to_numpy(loss),
+        }
 
         if self.nn_baseline:
             ## TODO: update the neural network baseline using the q_values as
@@ -151,13 +157,24 @@ class MLPPolicyPG(MLPPolicy):
             ## Note: You will need to convert the targets into a tensor using
                 ## ptu.from_numpy before using it in the loss
             
-            q_values = utils.normalize(q_values, q_values.mean(), q_values.std())
-            loss += self.baseline_loss(
-                self.baseline(observations), ptu.from_numpy(q_values))
+            # standardize q values
+            targets = utils.normalize(q_values, q_values.mean(), q_values.std())
+            targets = ptu.from_numpy(targets)
 
-        train_log = {
-            'Training Loss': ptu.to_numpy(loss),
-        }
+            # baseline network
+            baseline = self.baseline(observations).Squeeze()
+            assert baseline.shape == targets.shape
+
+            # update nn
+            baseline_loss = self.baseline_loss(baseline, targets)
+            self.baseline_optimizer.zero_grad()
+            baseline_loss.backward()
+            self.baseline_optimizer.step()
+
+            train_log['Training Baseline Loss'] = baseline_loss
+        
+
+
         return train_log
 
     def run_baseline_prediction(self, observations):

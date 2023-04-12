@@ -73,20 +73,22 @@ class PGAgent(BaseAgent):
         # trajectories and the second corresponds to timesteps, 
         # then flattened to a 1D numpy array.
         
-        q_values = []
+        # q_values = []
         if not self.reward_to_go:
             # TODO
-            for rewards in rewards_list:
-                q_values += self._discounted_return(rewards)
+            # for rewards in rewards_list:
+            #     q_values += self._discounted_return(rewards)
+            q_values = [self._discounted_return(rewards) for rewards in rewards_list]
 
         # Case 2: reward-to-go PG
         # Estimate Q^{pi}(s_t, a_t) by the discounted sum of rewards starting from t
         else:
             # TODO
-            for rewards in rewards_list:
-                q_values += self._discounted_cumsum(rewards)
+            # for rewards in rewards_list:
+            #     q_values += self._discounted_cumsum(rewards)
+            q_values = [self._discounted_cumsum(rewards) for rewards in rewards_list]
 
-        return np.array(q_values)
+        return np.concatenate(q_values)
 
     def estimate_advantage(self, obs: np.ndarray, rews_list: np.ndarray, q_values: np.ndarray, terminals: np.ndarray):
 
@@ -125,7 +127,7 @@ class PGAgent(BaseAgent):
                         ## is 1 if the state is the last in its trajectory, and
                         ## 0 otherwise.
                     if terminals[i]:
-                        advantages[i] = 0
+                        advantages[i] = rews[i] - values[i]
                     else:
                         delta_t = rews[i] + self.gamma * values[i + 1] - values[i]
                         advantages[i] = delta_t + self.gamma * self.gae_lambda * advantages[i + 1]
@@ -166,24 +168,23 @@ class PGAgent(BaseAgent):
         """
             Helper function
 
-            Input: list of rewards {r_0, r_1, ..., r_t', ... r_T} from a single rollout of length T
+            Input: list of rewards {r_0, r_1, ..., r_t', ... r_{T-1}} from a single rollout of length T
 
-            Output: list where each index t contains sum_{t'=t}^T gamma^t' r_{t'}
+            Output: list where each index t contains sum_{t'=0}^{T-1} gamma^t' r_{t'} (independent of t)
         """
-        list_of_discounted_returns = collections.deque()
-        prev_rews_sum = 0
-        gamma_t = self.gamma**(len(rewards) + 1)
-        for reward in reversed(rewards):
-            prev_rews_sum += gamma_t * reward
-            list_of_discounted_returns.appendleft(prev_rews_sum)
-            gamma_t /= self.gamma
-        return list(list_of_discounted_returns)
+        discounted_return = 0
+        gamma = 1
+        for reward in rewards:
+            discounted_return += gamma * reward
+            gamma *= self.gamma
+        list_of_discounted_returns = [discounted_return] * len(rewards)
+        return list_of_discounted_returns
 
     def _discounted_cumsum(self, rewards):
         """
             Helper function which
             -takes a list of rewards {r_0, r_1, ..., r_t', ... r_T},
-            -and returns a list where the entry in each index t is sum_{t'=t}^T gamma^(t'-t) * r_{t'}
+            -and returns a list where the entry in each index t is sum_{t'=t}^{T-1} gamma^(t'-t) * r_{t'}
         """
         list_of_discounted_cumsums = collections.deque()
         prev_rews_sum = 0

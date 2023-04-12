@@ -161,7 +161,7 @@ class RL_Trainer(object):
         # TODO: GETTHIS from HW1
         # use the current policy to collect training data
 
-        if itr == 0 and load_initial_expertdata:
+        if itr == 0 and load_initial_expertdata is not None:
             with open(load_initial_expertdata, "rb") as f:
                 loaded_paths = pickle.load(f)
             return loaded_paths, 0, None

@@ -141,7 +141,7 @@ class MLPPolicyPG(MLPPolicy):
         # HINT2: you will want to use the `log_prob` method on the distribution returned
             # by the `forward` method
 
-        loss = torch.mean(self(observations).log_prob(actions) * advantages)
+        loss = -torch.mean(self(observations).log_prob(actions) * advantages)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -162,7 +162,7 @@ class MLPPolicyPG(MLPPolicy):
             targets = ptu.from_numpy(targets)
 
             # baseline network
-            baseline = self.baseline(observations).Squeeze()
+            baseline = torch.squeeze(self.baseline(observations))
             assert baseline.shape == targets.shape
 
             # update nn

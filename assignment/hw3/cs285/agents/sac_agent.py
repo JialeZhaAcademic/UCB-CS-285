@@ -52,9 +52,9 @@ class SACAgent(BaseAgent):
         # HINT: You need to use the entropy term (alpha)
         # 2. Get current Q estimates and calculate critic loss
         # 3. Optimize the critic  
-        Q_target, _ = self.critic_target(ob_no[1:], ac_na[1:]).min(dim=1)
+        Q_target, _ = torch.cat(self.critic_target(ob_no[1:], ac_na[1:]), dim=1).min(dim=1)
         Q_target = torch.cat((Q_target, torch.tensor([0])))
-        target = re_n + self.gamma * (1 - terminal_n) * (Q_target - self.actor.alpha())
+        target = re_n + self.gamma * (1 - terminal_n) * (Q_target - self.actor.alpha)
         Q = self.critic(ob_no, ac_na)
         critic_loss = self.critic.loss(target, Q[0])
         critic_loss += self.critic.loss(target, Q[1])

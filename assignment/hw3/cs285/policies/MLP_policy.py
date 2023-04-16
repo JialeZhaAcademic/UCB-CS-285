@@ -131,6 +131,7 @@ class MLPPolicyAC(MLPPolicy):
         obs = ptu.from_numpy(observations)
         acs = ptu.from_numpy(actions)
         advs = ptu.from_numpy(adv_n)
+        self.optimizer.zero_grad()
         loss = -torch.mean(self(obs).log_prob(acs) * advs)
         loss.backward()
         self.optimizer.step()

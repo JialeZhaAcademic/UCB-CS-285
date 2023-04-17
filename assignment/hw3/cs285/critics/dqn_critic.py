@@ -66,7 +66,7 @@ class DQNCritic(BaseCritic):
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
         
         # TODO compute the Q-values from the target network 
-        qa_tp1_values = self.q_net_target(ob_no)
+        qa_tp1_values = self.q_net_target(next_ob_no)
 
         if self.double_q:
             # You must fill this part for Q2 of the Q-learning portion of the homework.
@@ -75,8 +75,9 @@ class DQNCritic(BaseCritic):
             # target Q-network. Please review Lecture 8 for more details,
             # and page 4 of https://arxiv.org/pdf/1509.06461.pdf is also a good reference.
             # TODO
-            _, a_tp1 = q_t_values.max(dim=1)
-            q_tp1 = torch.gather(qa_tp1_values, 1, a_tp1.unsqueeze(1)).squeeze(1)
+            temp_qa_tp1_values = self.q_net(next_ob_no)
+            _, ac_tp1 = temp_qa_tp1_values.max(dim=1)
+            q_tp1 = torch.gather(qa_tp1_values, 1, ac_tp1.unsqueeze(1)).squeeze(1)
         else:
             q_tp1, _ = qa_tp1_values.max(dim=1)
 

@@ -81,7 +81,10 @@ class MLPPolicySAC(MLPPolicy):
         self.optimizer.zero_grad()
         actor_loss.backward()
         self.optimizer.step()
-        
-        alpha_loss = 
 
+        alpha_loss =  -self.alpha * (log_pi + self.target_entropy).mean() # TODO
+        self.log_alpha_optimizer.zero_grad()
+        alpha_loss.backward()
+        self.log_alpha_optimizer.step()
+        
         return actor_loss, alpha_loss, self.alpha

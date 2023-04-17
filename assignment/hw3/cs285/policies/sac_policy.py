@@ -36,11 +36,16 @@ class MLPPolicySAC(MLPPolicy):
     @property
     def alpha(self):
         # TODO: Formulate entropy term
-        return entropy
+        return torch.exp(self.log_alpha)# entropy
 
     def get_action(self, obs: np.ndarray, sample=True) -> np.ndarray:
         # TODO: return sample from distribution if sampling
         # if not sampling return the mean of the distribution 
+        action_dist = self(ptu.from_numpy(obs))
+        if sample:
+            action = action_dist.sample()
+        else:
+            action = action_dist.mean
         return action
 
     # This function defines the forward pass of the network.
@@ -54,10 +59,29 @@ class MLPPolicySAC(MLPPolicy):
         # HINT: 
         # You will need to clip log values
         # You will need SquashedNormal from sac_utils file 
+
+        loc = self.mean_net(observation)
+        log_scale = torch.clamp(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1])
+        action_distribution = sac_utils.SquashedNormal(loc, torch.exp(log_scale))
+
+
         return action_distribution
 
     def update(self, obs, critic):
         # TODO Update actor network and entropy regularizer
         # return losses and alpha value
+
+        action_dist = self(obs)
+        action = action_dist.sample()
+        log_pi = action_dist.log_prob(action)
+
+        Q = torch.min(critic(obs, action))
+
+        actor_loss = (self.alpha*log_pi - Q).mean()
+        self.optimizer.zero_grad()
+        actor_loss.backward()
+        self.optimizer.step()
+        
+        alpha_loss = 
 
         return actor_loss, alpha_loss, self.alpha

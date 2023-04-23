@@ -58,7 +58,7 @@ class MLPPolicySAC(MLPPolicy):
         # TODO: get this from previous HW
         loc = self.mean_net(observation)
         scale = torch.clamp(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1]).exp()
-        action_distribution = sac_utils.SquashedNormal(loc, scale)
+        action_distribution = sac_utils.SquashedNormal(loc, torch.exp(scale))
         return action_distribution
 
     def update(self, obs, critic):
@@ -71,14 +71,14 @@ class MLPPolicySAC(MLPPolicy):
 
         Q = critic(observation, ptu.from_numpy(action))
         alpha_log_pi = self.alpha.exp() * log_pi
-        actor_loss = alpha_log_pi - Q
+        actor_loss = (alpha_log_pi - Q).mean()
         self.optimizer.zero_grad()
         actor_loss.backward()
         self.optimizer.step()
 
-        alpha_loss = -alpha_log_pi - self.alpha.exp() * self.target_entropy
+        alpha_loss = (-alpha_log_pi - self.alpha.exp() * self.target_entropy).mean()
         self.log_alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.log_alpha_optimizer.step()
-        
+
         return actor_loss, alpha_loss, self.alpha

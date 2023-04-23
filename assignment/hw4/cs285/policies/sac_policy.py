@@ -36,10 +36,17 @@ class MLPPolicySAC(MLPPolicy):
     @property
     def alpha(self):
         # TODO: get this from previous HW
+        entropy = self.log_alpha.exp()
         return entropy
 
     def get_action(self, obs: np.ndarray, sample=True) -> np.ndarray:
         # TODO: get this from previous HW
+        observations = ptu.from_numpy(obs)
+        action_dist = self(observations)
+        if sample:
+            action = ptu.to_numpy(action_dist.sample())
+        else:
+            action = action_dist.mean
         return action
 
     # This function defines the forward pass of the network.
@@ -49,8 +56,29 @@ class MLPPolicySAC(MLPPolicy):
     # `torch.distributions.Distribution` object. It's up to you!
     def forward(self, observation: torch.FloatTensor):
         # TODO: get this from previous HW
+        loc = self.mean_net(observation)
+        scale = torch.clamp(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1]).exp()
+        action_distribution = sac_utils.SquashedNormal(loc, scale)
         return action_distribution
 
     def update(self, obs, critic):
         # TODO: get this from previous HW
+
+        observation = ptu.from_numpy(obs)
+        action_dist = self(observation)
+        action = action_dist.sample()
+        log_pi = action_dist.log_prob(action)
+
+        Q = critic(observation, ptu.from_numpy(action))
+        alpha_log_pi = self.alpha.exp() * log_pi
+        actor_loss = alpha_log_pi - Q
+        self.optimizer.zero_grad()
+        actor_loss.backward()
+        self.optimizer.step()
+
+        alpha_loss = -alpha_log_pi - self.alpha.exp() * self.target_entropy
+        self.log_alpha_optimizer.zero_grad()
+        alpha_loss.backward()
+        self.log_alpha_optimizer.step()
+        
         return actor_loss, alpha_loss, self.alpha

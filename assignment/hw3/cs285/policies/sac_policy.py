@@ -46,7 +46,7 @@ class MLPPolicySAC(MLPPolicy):
             action = action_dist.sample()
         else:
             action = action_dist.mean
-        return action
+        return ptu.to_numpy(action)
 
     # This function defines the forward pass of the network.
     # You can return anything you want, but you should be able to differentiate

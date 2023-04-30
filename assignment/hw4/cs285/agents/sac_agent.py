@@ -61,7 +61,7 @@ class SACAgent(BaseAgent):
 
         ac_tp1_dist = self.actor(next_ob_no)
         ac_tp1 = ac_tp1_dist.sample()
-        log_pi = ac_tp1_dist.log_prob(ac_tp1)
+        log_pi = ac_tp1_dist.log_prob(ac_tp1).sum(1)
 
         Q_stp1_1, Q_stp1_2 = self.critic_target(next_ob_no, ac_tp1)
         Q_stp1 = torch.min(Q_stp1_1, Q_stp1_2)

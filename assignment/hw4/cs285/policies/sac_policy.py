@@ -63,8 +63,10 @@ class MLPPolicySAC(MLPPolicy):
     def forward(self, observation: torch.FloatTensor):
         # TODO: get this from previous HW
         loc = self.mean_net(observation)
-        scale = torch.clamp(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1]).exp()
-        action_distribution = sac_utils.SquashedNormal(loc, torch.exp(scale))
+        log_scale = torch.clamp(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1])
+        scale = torch.exp(log_scale).repeat(loc.shape[0], 1)
+
+        action_distribution = sac_utils.SquashedNormal(loc, scale)
         return action_distribution
 
     def update(self, obs, critic):
@@ -73,7 +75,7 @@ class MLPPolicySAC(MLPPolicy):
         observation = ptu.from_numpy(obs)
         action_dist = self(observation)
         action = action_dist.sample()
-        log_pi = action_dist.log_prob(action)
+        log_pi = action_dist.log_prob(action).sum(1)
 
         Q_1, Q_2 = critic(observation, action)
         Q = torch.min(Q_1, Q_2)

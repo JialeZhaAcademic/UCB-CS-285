@@ -65,7 +65,7 @@ class SACAgent(BaseAgent):
         Q_target = torch.min(Q_t1, Q_t2)
         # Q_target = torch.cat((Q_target, torch.tensor([0])))
         
-        log_pi = next_ac_dist.log_prob(next_ac_na)
+        log_pi = next_ac_dist.log_prob(next_ac_na).sum(1)
         target = re_n + self.gamma * (1 - terminal_n) * (Q_target - self.actor.alpha * log_pi)
 
         Q1, Q2 = self.critic(ob_no, ac_na)

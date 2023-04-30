@@ -41,7 +41,13 @@ class MLPPolicySAC(MLPPolicy):
 
     def get_action(self, obs: np.ndarray, sample=True) -> np.ndarray:
         # TODO: get this from previous HW
-        observations = ptu.from_numpy(obs)
+
+        if len(obs.shape) > 1:
+            observation = obs
+        else:
+            observation = obs[None]
+
+        observations = ptu.from_numpy(observation)
         action_dist = self(observations)
         if sample:
             action = action_dist.sample()
@@ -77,7 +83,7 @@ class MLPPolicySAC(MLPPolicy):
         actor_loss.backward()
         self.optimizer.step()
 
-        alpha_loss = (-alpha_log_pi - self.alpha.exp() * self.target_entropy).mean()
+        alpha_loss =  -self.alpha * ((log_pi + self.target_entropy).detach()).mean() 
         self.log_alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.log_alpha_optimizer.step()

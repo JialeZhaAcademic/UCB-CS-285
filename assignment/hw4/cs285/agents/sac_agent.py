@@ -57,17 +57,18 @@ class SACAgent(BaseAgent):
         re_n = ptu.from_numpy(re_n)
         terminal_n = ptu.from_numpy(terminal_n)
 
-        Q1, Q2 = self.critic(ob_no, ac_na)
+        Q_st_1, Q_st_2 = self.critic(ob_no, ac_na)
 
         ac_tp1_dist = self.actor(next_ob_no)
         ac_tp1 = ac_tp1_dist.sample()
         log_pi = ac_tp1_dist.log_prob(ac_tp1)
 
-        Q_stp1, _ = torch.min(self.critic_target(next_ob_no, ac_tp1))
+        Q_stp1_1, Q_stp1_2 = self.critic_target(next_ob_no, ac_tp1)
+        Q_stp1 = torch.min(Q_stp1_1, Q_stp1_2)
 
         target = re_n + self.gamma * (1 - terminal_n) * (Q_stp1 - self.actor.alpha * log_pi)
-        critic_loss = self.critic.loss(Q1, target)
-        critic_loss += self.critic.loss(Q2, target)
+        critic_loss = self.critic.loss(Q_st_1, target)
+        critic_loss += self.critic.loss(Q_st_2, target)
 
         self.critic.optimizer.zero_grad()
         self.critic.backward()

@@ -80,12 +80,12 @@ class MLPPolicySAC(MLPPolicy):
         Q_1, Q_2 = critic(observation, action)
         Q = torch.min(Q_1, Q_2)
         alpha_log_pi = self.alpha.exp() * log_pi
-        actor_loss = (alpha_log_pi - Q).mean()
+        actor_loss = (alpha_log_pi - Q).sum()
         self.optimizer.zero_grad()
         actor_loss.backward()
         self.optimizer.step()
 
-        alpha_loss =  -self.alpha * ((log_pi + self.target_entropy).detach()).mean() 
+        alpha_loss =  -self.alpha * ((log_pi + self.target_entropy).detach()).sum() 
         self.log_alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.log_alpha_optimizer.step()

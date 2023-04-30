@@ -66,9 +66,14 @@ class MLPPolicySAC(MLPPolicy):
         # You will need to clip log values
         # You will need SquashedNormal from sac_utils file 
 
-        loc = self.mean_net(observation)
         log_scale = torch.clamp(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1])
-        action_distribution = sac_utils.SquashedNormal(loc, torch.exp(log_scale))
+
+        batch_mean = self.mean_net(observation)
+        scale_tril = torch.diag(torch.exp(log_scale))
+        batch_dim = batch_mean.shape[0]
+        batch_scale_tril = scale_tril.repeat(batch_dim, 1, 1)
+
+        action_distribution = sac_utils.SquashedNormal(batch_mean, batch_scale_tril)
 
 
         return action_distribution

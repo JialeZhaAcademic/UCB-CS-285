@@ -44,7 +44,7 @@ class MLPPolicySAC(MLPPolicy):
         observations = ptu.from_numpy(obs)
         action_dist = self(observations)
         if sample:
-            action = ptu.to_numpy(action_dist.sample())
+            action = action_dist.sample()
         else:
             action = action_dist.mean
         return ptu.to_numpy(action)
@@ -69,7 +69,8 @@ class MLPPolicySAC(MLPPolicy):
         action = action_dist.sample()
         log_pi = action_dist.log_prob(action)
 
-        Q = critic(observation, ptu.from_numpy(action))
+        Q_1, Q_2 = critic(observation, action)
+        Q = torch.min(Q_1, Q_2)
         alpha_log_pi = self.alpha.exp() * log_pi
         actor_loss = (alpha_log_pi - Q).mean()
         self.optimizer.zero_grad()

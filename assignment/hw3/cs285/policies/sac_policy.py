@@ -40,8 +40,14 @@ class MLPPolicySAC(MLPPolicy):
 
     def get_action(self, obs: np.ndarray, sample=True) -> np.ndarray:
         # TODO: return sample from distribution if sampling
-        # if not sampling return the mean of the distribution 
-        action_dist = self(ptu.from_numpy(obs))
+        # if not sampling return the mean of the distribution
+
+        if len(obs.shape) > 1:
+            observation = obs
+        else:
+            observation = obs[None]
+ 
+        action_dist = self(ptu.from_numpy(observation))
         if sample:
             action = action_dist.sample()
         else:
@@ -71,11 +77,13 @@ class MLPPolicySAC(MLPPolicy):
         # TODO Update actor network and entropy regularizer
         # return losses and alpha value
 
-        action_dist = self(obs)
+        observation = ptu.from_numpy(obs)
+        action_dist = self(observation)
         action = action_dist.sample()
         log_pi = action_dist.log_prob(action)
 
-        Q = torch.min(critic(obs, action))
+        Q_1, Q_2 = critic(obs, action)
+        Q = torch.min(Q_1, Q_2)
 
         actor_loss = (self.alpha*log_pi - Q).mean()
         self.optimizer.zero_grad()

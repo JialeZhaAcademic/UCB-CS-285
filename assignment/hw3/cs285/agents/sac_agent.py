@@ -53,11 +53,19 @@ class SACAgent(BaseAgent):
         # 2. Get current Q estimates and calculate critic loss
         # 3. Optimize the critic  
 
-        next_ac_na = ptu.from_numpy(self.actor.get_action(next_ob_no))
-        Q_target, _ = torch.min(self.critic_target(next_ob_no, next_ac_na))
+        ob_no = ptu.from_numpy(ob_no)
+        ac_na = ptu.from_numpy(ac_na)
+        next_ob_no = ptu.from_numpy(next_ob_no)
+        re_n = ptu.from_numpy(re_n)
+        terminal_n = ptu.from_numpy(terminal_n)
+
+        next_ac_dist = self.actor(next_ob_no)
+        next_ac_na = next_ac_dist.sample()
+        Q_t1, Q_t2 = self.critic_target(next_ob_no, next_ac_na)
+        Q_target = torch.min(Q_t1, Q_t2)
         # Q_target = torch.cat((Q_target, torch.tensor([0])))
         
-        log_pi = self.actor(next_ob_no).log_prob(next_ac_na)
+        log_pi = next_ac_dist.log_prob(next_ac_na)
         target = re_n + self.gamma * (1 - terminal_n) * (Q_target - self.actor.alpha * log_pi)
 
         Q1, Q2 = self.critic(ob_no, ac_na)

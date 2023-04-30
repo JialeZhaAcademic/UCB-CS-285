@@ -103,6 +103,7 @@ class BootstrappedContinuousCritic(nn.Module, BaseCritic):
                 step_loss.backward()
                 self.optimizer.step()
                 
+                target.detach_()
                 loss += step_loss
         loss = loss / self.num_target_updates / self.num_grad_steps_per_target_update
         return loss.item()

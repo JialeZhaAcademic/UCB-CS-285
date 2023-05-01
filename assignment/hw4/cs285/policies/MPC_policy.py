@@ -65,12 +65,13 @@ class MPCPolicy(BasePolicy):
             # iteratively as described in Section 3.3, "Iterative Random-Shooting with Refinement" of
             # https://arxiv.org/pdf/1909.11652.pdf 
 
+            random_action_sequences = self.sample_action_sequences(num_sequences, horizon)
             mu_t = np.zeros((horizon, self.ac_dim))
             delta_t = np.zeros((horizon, self.ac_dim, self.ac_dim))
             for t in range(horizon):
-                    temp_acs = np.squeeze(random_action_sequences[:, t, :])
-                    mu_t[t] = temp_acs.mean(axis=0)
-                    delta_t[t] = np.cov(temp_acs.T)
+                temp_acs = np.squeeze(random_action_sequences[:, t, :])
+                mu_t[t] = temp_acs.mean(axis=0)
+                delta_t[t] = np.cov(temp_acs.T)
             
             for i in range(self.cem_iterations):
                 # - Sample candidate sequences from a Gaussian with the current 
@@ -83,7 +84,8 @@ class MPCPolicy(BasePolicy):
                 # - Update the elite mean and variance
                 sample_action_sequences = np.zeros((num_sequences, horizon, self.ac_dim))
                 for t in range(horizon):
-                    sample_action_sequences[:, t, :] = np.random.normal(mu_t, delta_t)
+                    sample_action_sequences[:, t, :] = np.random.normal(
+                        mu_t, delta_t, size=(num_sequences, self.ac_dim))
                 
                 action_values = self.evaluate_candidate_sequences(
                     sample_action_sequences, obs)
@@ -112,7 +114,7 @@ class MPCPolicy(BasePolicy):
         rewards = []
         for model in self.dyn_models: 
             rewards.append(self.calculate_sum_of_rewards(
-                obs, candidate_action_sequences, obs))
+                obs, candidate_action_sequences, model))
 
         return np.mean(rewards, axis=0) # TODO
 

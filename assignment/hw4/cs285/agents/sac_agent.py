@@ -57,23 +57,22 @@ class SACAgent(BaseAgent):
         re_n = ptu.from_numpy(re_n)
         terminal_n = ptu.from_numpy(terminal_n)
 
-        Q_st_1, Q_st_2 = self.critic(ob_no, ac_na)
+        with torch.no_grad():
+            next_ac_dist = self.actor(next_ob_no)
+            next_ac_na = next_ac_dist.rsample()
+            Q_t1, Q_t2 = self.critic_target(next_ob_no, next_ac_na)
+            Q_target = torch.min(Q_t1, Q_t2)
+            
+            log_pi = next_ac_dist.log_prob(next_ac_na).sum(-1, keepdim=True)
+            target = re_n + self.gamma * (1 - terminal_n) * (Q_target - self.actor.alpha.detach() * log_pi)
 
-        ac_tp1_dist = self.actor(next_ob_no)
-        ac_tp1 = ac_tp1_dist.sample()
-        log_pi = ac_tp1_dist.log_prob(ac_tp1).sum(1)
-
-        Q_stp1_1, Q_stp1_2 = self.critic_target(next_ob_no, ac_tp1)
-        Q_stp1 = torch.min(Q_stp1_1, Q_stp1_2)
-
-        target = re_n + self.gamma * (1 - terminal_n) * (Q_stp1 - self.actor.alpha * log_pi)
-        critic_loss = self.critic.loss(Q_st_1, target)
-        critic_loss += self.critic.loss(Q_st_2, target)
-
+        Q1, Q2 = self.critic(ob_no, ac_na)
+        critic_loss = self.critic.loss(target, Q1)
+        critic_loss += self.critic.loss(target, Q2)
+        
         self.critic.optimizer.zero_grad()
-        self.critic.backward()
+        critic_loss.backward()
         self.critic.optimizer.step()
-
         return critic_loss
 
     def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):

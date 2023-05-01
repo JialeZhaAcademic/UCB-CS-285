@@ -75,7 +75,7 @@ class MLPPolicySAC(MLPPolicy):
         observation = ptu.from_numpy(obs)
         action_dist = self(observation)
         action = action_dist.sample()
-        log_pi = action_dist.log_prob(action).sum(1)
+        log_pi = action_dist.log_prob(action).sum(-1, keepdim=True)
 
         Q_1, Q_2 = critic(observation, action)
         Q = torch.min(Q_1, Q_2)

@@ -67,7 +67,7 @@ class MLPPolicySAC(MLPPolicy):
         # You will need SquashedNormal from sac_utils file 
 
         loc = self.mean_net(observation)
-        log_scale = torch.clamp(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1])
+        log_scale = torch.clip(self.logstd, self.log_std_bounds[0], self.log_std_bounds[1])
         scale = torch.exp(log_scale).repeat(loc.shape[0], 1)
 
         action_distribution = sac_utils.SquashedNormal(loc, scale)
@@ -81,8 +81,8 @@ class MLPPolicySAC(MLPPolicy):
 
         observation = ptu.from_numpy(obs)
         action_dist = self(observation)
-        action = action_dist.sample()
-        log_pi = action_dist.log_prob(action).sum(1)
+        action = action_dist.rsample()
+        log_pi = action_dist.log_prob(action).sum(-1, keepdim=True)
 
         Q_1, Q_2 = critic(obs, action)
         Q = torch.min(Q_1, Q_2)

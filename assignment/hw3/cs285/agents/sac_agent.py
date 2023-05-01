@@ -59,14 +59,14 @@ class SACAgent(BaseAgent):
         re_n = ptu.from_numpy(re_n)
         terminal_n = ptu.from_numpy(terminal_n)
 
-        next_ac_dist = self.actor(next_ob_no)
-        next_ac_na = next_ac_dist.sample()
-        Q_t1, Q_t2 = self.critic_target(next_ob_no, next_ac_na)
-        Q_target = torch.min(Q_t1, Q_t2)
-        # Q_target = torch.cat((Q_target, torch.tensor([0])))
-        
-        log_pi = next_ac_dist.log_prob(next_ac_na).sum(1)
-        target = re_n + self.gamma * (1 - terminal_n) * (Q_target - self.actor.alpha * log_pi)
+        with torch.no_grad():
+            next_ac_dist = self.actor(next_ob_no)
+            next_ac_na = next_ac_dist.rsample()
+            Q_t1, Q_t2 = self.critic_target(next_ob_no, next_ac_na)
+            Q_target = torch.min(Q_t1, Q_t2)
+            
+            log_pi = next_ac_dist.log_prob(next_ac_na).sum(-1, keepdim=True)
+            target = re_n + self.gamma * (1 - terminal_n) * (Q_target - self.actor.alpha.detach() * log_pi)
 
         Q1, Q2 = self.critic(ob_no, ac_na)
         critic_loss = self.critic.loss(target, Q1)

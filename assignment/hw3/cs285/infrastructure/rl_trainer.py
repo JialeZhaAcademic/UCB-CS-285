@@ -304,10 +304,18 @@ class RL_Trainer(object):
         # TODO: get this from hw1 or hw2
         # use the current policy to collect training data
 
-        if itr == 0 and load_initial_expertdata is not None:
-            with open(load_initial_expertdata, "rb") as f:
-                loaded_paths = pickle.load(f)
-            return loaded_paths, 0, None
+        if itr == 0:
+            if load_initial_expertdata is not None:
+                with open(load_initial_expertdata, "rb") as f:
+                    loaded_paths = pickle.load(f)
+                return loaded_paths, 0, None
+            if save_expert_data_to_disk:
+                num_transitions_to_sample = self.params['batch_size_initial']
+            if isinstance(self.agent, SACAgent):
+                print('\nSampling seed steps for training...')
+                paths, timesteps_this_batch = utils.sample_random_trajectories(
+                    self.env, num_transitions_to_sample, self.params['ep_len'])
+                return paths, timesteps_this_batch, None
 
         print("\nCollecting data to be used for training...")
 

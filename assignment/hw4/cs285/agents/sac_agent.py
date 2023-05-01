@@ -83,21 +83,26 @@ class SACAgent(BaseAgent):
         alpha_loss = 0
         temperature = 0
 
+        # 1. Implement the following pseudocode:
+        # for agent_params['num_critic_updates_per_agent_update'] steps,
+        #     update the critic
         for _ in range(self.agent_params['num_critic_updates_per_agent_update']):
             critic_loss = self.update_critic(ob_no, ac_na, next_ob_no, re_n, terminal_n)
-            self.training_step += 1
+            
         
         # 2. Softly update the target every critic_target_update_frequency (HINT: look at sac_utils)
-            if self.training_step % self.critic_target_update_frequency == 0:
-                sac_utils.soft_update_params(self.critic, self.critic_target, self.critic_tau)
+        if self.training_step % self.critic_target_update_frequency == 0:
+            sac_utils.soft_update_params(self.critic, self.critic_target, self.critic_tau)
         
         # 3. Implement following pseudocode:
         # If you need to update actor
         # for agent_params['num_actor_updates_per_agent_update'] steps,
         #     update the actor
-            if self.training_step % self.actor_update_frequency == 0:
-                for _ in range(self.agent_params['num_actor_updates_per_agent_update']):
-                    actor_loss, alpha_loss, temperature = self.actor.update(ob_no, self.critic)
+
+        if self.training_step % self.actor_update_frequency == 0:
+            for _ in range(self.agent_params['num_actor_updates_per_agent_update']):
+                actor_loss, alpha_loss, temperature = self.actor.update(ob_no, self.critic)
+        self.training_step += 1
         
         # 4. gather losses for logging
         loss = OrderedDict()
@@ -105,6 +110,7 @@ class SACAgent(BaseAgent):
         loss['Actor_Loss'] = actor_loss # TODO
         loss['Alpha_Loss'] = alpha_loss # TODO
         loss['Temperature'] = temperature # TODO
+
 
 
     def add_to_replay_buffer(self, paths):

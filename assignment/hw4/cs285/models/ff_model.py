@@ -138,7 +138,7 @@ class FFModel(nn.Module, BaseModel):
         # and standard deviation of the model.
         target = normalize(next_observations - observations, 
                            data_statistics['delta_mean'], data_statistics['delta_std'])
-        
+        target = ptu.from_numpy(target)
         # TODO(Q1) compute the loss
         # Hint: `self(...)` returns a tuple, but you only need to use one of the
         # outputs.

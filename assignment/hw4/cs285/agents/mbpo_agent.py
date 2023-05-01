@@ -34,8 +34,8 @@ class MBPOAgent(BaseAgent):
             # determine the next observation by averaging the prediction of all the 
             # dynamics models in the ensemble
             
-            next_ob = np.mean([dy_model(ob, ac, self.mb_agent.data_statistics) 
-                               for dy_model in self.mb_agent.dyn_models], axis=0) # TODO
+            next_ob = np.mean([model.get_prediction(ob, ac, self.mb_agent.data_statistics) 
+                               for model in self.mb_agent.dyn_models], axis=0) # TODO
 
             # query the reward function to determine the reward of this transition
             # HINT: use self.env.get_reward

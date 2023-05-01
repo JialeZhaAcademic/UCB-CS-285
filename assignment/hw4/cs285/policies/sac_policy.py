@@ -75,11 +75,11 @@ class MLPPolicySAC(MLPPolicy):
         observation = ptu.from_numpy(obs)
         action_dist = self(observation)
         action = action_dist.sample()
-        log_pi = action_dist.log_prob(action).sum(-1, keepdim=True)
+        log_pi = action_dist.log_prob(action).sum(-1)
 
         Q_1, Q_2 = critic(observation, action)
         Q = torch.min(Q_1, Q_2)
-        alpha_log_pi = self.alpha * log_pi
+        alpha_log_pi = self.alpha.detach() * log_pi
         actor_loss = (alpha_log_pi - Q).sum()
         self.optimizer.zero_grad()
         actor_loss.backward()

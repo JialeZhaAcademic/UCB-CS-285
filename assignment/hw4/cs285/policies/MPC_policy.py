@@ -83,8 +83,8 @@ class MPCPolicy(BasePolicy):
                 # - Update the elite mean and variance
                 sample_action_sequences = np.zeros((num_sequences, horizon, self.ac_dim))
                 for t in range(horizon):
-                    sample_action_sequences[:, t, :] = np.random.normal(
-                        mu_t, delta_t, size=(num_sequences, self.ac_dim))
+                    sample_action_sequences[:, t, :] = np.random.multivariate_normal(
+                        mu_t[t], delta_t[t], size=num_sequences)
                 
                 action_values = self.evaluate_candidate_sequences(
                     sample_action_sequences, obs)
@@ -163,11 +163,12 @@ class MPCPolicy(BasePolicy):
         #       action sequence.
 
         ob = obs
+        ob = np.repeat(ob[None], candidate_action_sequences.shape[0], axis=0)
         sum_of_rewards = np.zeros(len(candidate_action_sequences))
         for t in range(self.horizon):
             acs = np.squeeze(candidate_action_sequences[:, t, :])
             next_ob = model.get_prediction(
                 ob, acs, self.data_statistics)
-            sum_of_rewards += self.env.get_reward(ob, acs)
+            sum_of_rewards += self.env.get_reward(ob, acs)[0]
             ob = next_ob
         return sum_of_rewards

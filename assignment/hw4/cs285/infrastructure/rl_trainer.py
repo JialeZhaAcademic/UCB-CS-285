@@ -14,7 +14,7 @@ from cs285.agents.mbpo_agent import MBPOAgent
 from cs285.infrastructure import pytorch_util as ptu
 from cs285.infrastructure import utils
 from cs285.infrastructure.logger import Logger
-
+from cs285.agents.sac_agent import SACAgent
 # register all of our envs
 from cs285.envs import register_envs
 
@@ -165,7 +165,10 @@ class RL_Trainer(object):
                         # learned dynamics model. Add this trajectory to the correct replay buffer.
                         # HINT: Look at collect_model_trajectory and add_to_replay_buffer from MBPOAgent.
                         # HINT: Use the from_model argument to ensure the paths are added to the correct buffer.
-                        pass
+                        self.agent.add_to_replay_buffer(
+                            self.agent.collect_model_trajectory(self.params['mbpo_rollout_length']),
+                            from_model=True)
+                        
                     # train the SAC agent
                     self.train_sac_agent()
 
@@ -199,10 +202,18 @@ class RL_Trainer(object):
         # TODO: get this from previous HW
         # use the current policy to collect training data
 
-        if itr == 0 and initial_expertdata is not None:
-            with open(initial_expertdata, "rb") as f:
-                loaded_paths = pickle.load(f)
-            return loaded_paths, 0, None
+        if itr == 0:
+            if initial_expertdata is not None:
+                with open(initial_expertdata, "rb") as f:
+                    loaded_paths = pickle.load(f)
+                return loaded_paths, 0, None
+            if save_expert_data_to_disk:
+                num_transitions_to_sample = self.params['batch_size_initial']
+            if isinstance(self.agent, SACAgent):
+                print('\nSampling seed steps for training...')
+                paths, timesteps_this_batch = utils.sample_random_trajectories(
+                    self.env, num_transitions_to_sample, self.params['ep_len'])
+                return paths, timesteps_this_batch, None
 
         print("\nCollecting data to be used for training...")
 
@@ -213,7 +224,7 @@ class RL_Trainer(object):
         # collect more rollouts with the same policy, to be saved as videos in tensorboard
         # note: here, we collect MAX_NVIDEO rollouts, each of length MAX_VIDEO_LEN
         train_video_paths = None
-        if self.logvideo:
+        if self.log_video:
             print('\nCollecting train rollouts to be used for saving videos...')
             ## look in utils and implement sample_n_trajectories
             train_video_paths = utils.sample_n_trajectories(self.env, collect_policy, MAX_NVIDEO, MAX_VIDEO_LEN, True)

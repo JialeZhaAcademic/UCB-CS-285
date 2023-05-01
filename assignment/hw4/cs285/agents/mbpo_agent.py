@@ -35,11 +35,11 @@ class MBPOAgent(BaseAgent):
             # dynamics models in the ensemble
             
             next_ob = np.mean([dy_model(ob, ac, self.mb_agent.data_statistics) 
-                               for dy_model in self.mb_agent.dyn_models]) # TODO
+                               for dy_model in self.mb_agent.dyn_models], axis=0) # TODO
 
             # query the reward function to determine the reward of this transition
             # HINT: use self.env.get_reward
-            rew, _ = self.env.get_reward(next_ob, ac) # TODO
+            rew, _ = self.env.get_reward(ob, ac) # TODO
 
             obs.append(ob[0])
             acs.append(ac[0])

@@ -53,10 +53,8 @@ class MPCPolicy(BasePolicy):
             # TODO(Q1) uniformly sample trajectories and return an array of
             # dimensions (num_sequences, horizon, self.ac_dim) in the range
             # [self.low, self.high]
-            random_action_sequences = np.zeros((num_sequences, horizon, self.ac_dim))
-            for i in range(num_sequences):
-                for j in range(horizon):
-                    random_action_sequences[i, j] = self.ac_space.sample()
+            random_action_sequences = np.random.uniform(
+                self.low, self.high, (num_sequences, horizon, self.ac_dim))
             return random_action_sequences
         
         elif self.sample_strategy == 'cem':
@@ -65,7 +63,8 @@ class MPCPolicy(BasePolicy):
             # iteratively as described in Section 3.3, "Iterative Random-Shooting with Refinement" of
             # https://arxiv.org/pdf/1909.11652.pdf 
 
-            random_action_sequences = self.sample_action_sequences(num_sequences, horizon)
+            random_action_sequences = np.random.uniform(
+                self.low, self.high, (num_sequences, horizon, self.ac_dim))
             mu_t = np.zeros((horizon, self.ac_dim))
             delta_t = np.zeros((horizon, self.ac_dim, self.ac_dim))
             for t in range(horizon):
@@ -89,7 +88,7 @@ class MPCPolicy(BasePolicy):
                 
                 action_values = self.evaluate_candidate_sequences(
                     sample_action_sequences, obs)
-                elite_action_sequences = sample_action_sequences[np.argsort(action_values)[:self.cem_num_elites]]
+                elite_action_sequences = sample_action_sequences[np.argsort(action_values)[-self.cem_num_elites:]]
 
                 for t in range(horizon):
                     temp_acs = np.squeeze(elite_action_sequences[:, t, :])
@@ -169,5 +168,6 @@ class MPCPolicy(BasePolicy):
             acs = np.squeeze(candidate_action_sequences[:, t, :])
             next_ob = model.get_prediction(
                 ob, acs, self.data_statistics)
-            sum_of_rewards += self.env.get_reward(next_ob, acs)
+            sum_of_rewards += self.env.get_reward(ob, acs)
+            ob = next_ob
         return sum_of_rewards

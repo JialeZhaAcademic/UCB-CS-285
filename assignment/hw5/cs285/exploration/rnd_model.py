@@ -34,6 +34,11 @@ class RNDModel(nn.Module, BaseExplorationModel):
             self.f_hat.parameters(),
             **self.optimizer_spec.optim_kwargs
         )
+        
+        self.learning_rate_scheduler = optim.lr_scheduler.LambdaLR(
+            self.optimizer,
+            self.optimizer_spec.learning_rate_schedule,
+        )
 
     def forward(self, ob_no):
         # <DONE>: Get the prediction error for ob_no

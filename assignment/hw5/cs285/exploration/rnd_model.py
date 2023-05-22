@@ -34,7 +34,7 @@ class RNDModel(nn.Module, BaseExplorationModel):
             self.f_hat.parameters(),
             **self.optimizer_spec.optim_kwargs
         )
-        
+
         self.learning_rate_scheduler = optim.lr_scheduler.LambdaLR(
             self.optimizer,
             self.optimizer_spec.learning_rate_schedule,
@@ -61,4 +61,5 @@ class RNDModel(nn.Module, BaseExplorationModel):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        self.learning_rate_scheduler.step()
         return loss

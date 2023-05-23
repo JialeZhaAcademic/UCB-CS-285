@@ -29,7 +29,7 @@ class AWACAgent(DQNAgent):
         self.explore_weight_schedule = agent_params['explore_weight_schedule']
         self.exploit_weight_schedule = agent_params['exploit_weight_schedule']
         
-        self.actor = ArgMaxPolicy(self.exploitation_critic)
+        self.actor = ArgMaxPolicy(self.exploration_critic)
         self.eval_policy = self.awac_actor = MLPPolicyAWAC(
             self.agent_params['ac_dim'],
             self.agent_params['ob_dim'],
@@ -133,7 +133,7 @@ class AWACAgent(DQNAgent):
             # 1): Update the exploration model (based off s')
             # 2): Update the exploration critic (based off mixed_reward)
             # 3): Update the exploitation critic (based off env_reward)
-            expl_model_loss = self.exploration_model.update(ob_no)
+            expl_model_loss = self.exploration_model.update(next_ob_no)
             exploration_critic_loss = self.exploration_critic.update(
                 ob_no, ac_na, next_ob_no, mixed_reward, terminal_n)
             exploitation_critic_loss = self.exploitation_critic.update(

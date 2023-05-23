@@ -80,7 +80,10 @@ class AWACAgent(DQNAgent):
         else:
             
             for _ in range(n_actions):
-                pass
+                ac_i = self.env.action_spaca.sample()
+                q_a_i = self.get_qvals(self.actor.critic, ob_no, ac_i)
+                log_p_i = ptu.to_numpy(dist.log_prob(ptu.from_numpy(ac_i)).squeeze())
+                vals.append(q_a_i * log_p_i)
         v_pi = sum(vals)
 
         # TODO Calculate Q-Values

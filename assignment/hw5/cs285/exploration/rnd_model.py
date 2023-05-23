@@ -29,6 +29,8 @@ class RNDModel(nn.Module, BaseExplorationModel):
                                self.size, init_method=init_method_1)
         self.f_hat = ptu.build_mlp(self.ob_dim, self.output_size, self.n_layers,
                                self.size, init_method=init_method_2)
+        self.f.to(ptu.device)
+        self.f_hat.to(ptu.device)
 
         self.optimizer = self.optimizer_spec.constructor(
             self.f_hat.parameters(),
@@ -55,6 +57,7 @@ class RNDModel(nn.Module, BaseExplorationModel):
     def update(self, ob_no):
         # <DONE>: Update f_hat using ob_no
         # Hint: Take the mean prediction error across the batch
+        ob_no = ptu.from_numpy(ob_no)
         error = self(ob_no)
         loss = torch.mean(error)
 

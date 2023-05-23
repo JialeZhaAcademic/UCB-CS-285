@@ -175,4 +175,8 @@ class MLPPolicyAWAC(MLPPolicy):
         actor_loss = torch.mean(
             action_dist.log_prob(actions) * torch.exp(adv_n / self.lambda_awac))
 
+        self.optimizer.zero_grad()
+        actor_loss.backward()
+        self.optimizer.step()
+
         return actor_loss.item()

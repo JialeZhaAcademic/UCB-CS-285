@@ -88,7 +88,11 @@ class IQLAgent(DQNAgent):
             # TODO: Run Exploration Model #
             # Evaluate the exploration model on s to get the exploration bonus
             # HINT: Normalize the exploration bonus, as RND values vary highly in magnitude
-            expl_bonus = self.exploration_model(ob_no)
+            expl_bonus = self.exploration_model.forward_np(ob_no)
+            self.running_rnd_rew_std = (self.rnd_gamma * self.running_rnd_rew_std + 
+                                        (1 - self.rnd_gamma) * np.std(expl_bonus, axis=0))
+            expl_bonus = normalize(
+                expl_bonus, expl_bonus.mean(axis=0), self.running_rnd_rew_std)
 
             # TODO: Reward Calculations #
             # Calculate mixed rewards, which will be passed into the exploration critic

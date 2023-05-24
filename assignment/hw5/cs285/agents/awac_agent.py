@@ -88,7 +88,7 @@ class AWACAgent(DQNAgent):
 
         # TODO Calculate Q-Values
         q_vals = self.actor.critic.qa_values(ob_no)
-        q_vals = torch.gather(q_vals, ac_na.unsqueeze(1)).squeeze(1)
+        q_vals = torch.gather(q_vals, 1, ac_na.unsqueeze(1)).squeeze(1)
         q_vals = ptu.to_numpy(q_vals)
 
         # TODO Calculate the Advantage using q_vals and v_pi  

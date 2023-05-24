@@ -74,7 +74,7 @@ class IQLCritic(BaseCritic):
 
         ### YOUR CODE HERE ###
         qa_values = self.q_net(ob_no)
-        q_values = torch.gather(qa_values, ac_na.unsqueeze(1)).sequeeze()
+        q_values = torch.gather(qa_values, 1, ac_na.unsqueeze(1)).sequeeze()
         values = self.v_net(ob_no)
         diff = q_values - values
         value_loss = self.expectile_loss(diff)
@@ -102,7 +102,7 @@ class IQLCritic(BaseCritic):
         ### YOUR CODE HERE ###
         v_s_tp1 = self.v_net(next_ob_no)
         q_sa = self.q_net(ob_no)
-        q_sa = torch.gather(q_sa, ac_na.unsqueeze(1)).squeeze()
+        q_sa = torch.gather(q_sa, 1, ac_na.unsqueeze(1)).squeeze()
         loss = torch.mean((reward_n + self.gamma * v_s_tp1 - q_sa)**2)
 
         assert loss.shape == ()

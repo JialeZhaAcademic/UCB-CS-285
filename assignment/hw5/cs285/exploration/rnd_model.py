@@ -45,9 +45,8 @@ class RNDModel(nn.Module, BaseExplorationModel):
     def forward(self, ob_no):
         # <DONE>: Get the prediction error for ob_no
         # HINT: Remember to detach the output of self.f!
-        error = self.f(ob_no).detach - self.f_hat(ob_no)
-        error = (error**2).sum(-1)
-        return torch.sqrt(error)
+        diff = self.f(ob_no).detach - self.f_hat(ob_no)
+        return torch.norm(diff, dim=1)
 
     def forward_np(self, ob_no):
         ob_no = ptu.from_numpy(ob_no)

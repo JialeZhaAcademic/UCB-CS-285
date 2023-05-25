@@ -58,22 +58,22 @@ class AWACAgent(DQNAgent):
         # TODO: Calculate and return the advantage (n sample estimate) 
         # TODO convert to torch tensors
 
-        ob_no = ptu.from_numpy(ob_no)
-        ac_na = ptu.from_numpy(ac_na)
-        re_n = ptu.from_numpy(re_n)
-        next_ob_no = ptu.from_numpy(next_ob_no)
-        terminal_n = ptu.from_numpy(terminal_n)
+        # ob_no = ptu.from_numpy(ob_no)
+        ac_na = ptu.from_numpy(ac_na).to(torch.long)
+        # re_n = ptu.from_numpy(re_n)
+        # next_ob_no = ptu.from_numpy(next_ob_no)
+        # terminal_n = ptu.from_numpy(terminal_n)
 
         # HINT: store computed values in the provided vals list. You will use the average of this list for calculating the advantage.
         vals = []
         # TODO: get action distribution for current obs, you will use this for the value function estimate
-        dist = self.eval_policy(ob_no)
+        dist = self.awac_actor(ptu.from_numpy(ob_no))
         # TODO Calculate Value Function Estimate given current observation
         # HINT: You may find it helpful to utilze get_qvals defined above
         batch_size = ob_no.shape[0]
         if self.agent_params['discrete']:
             for i in range(self.agent_params['ac_dim']):
-                ac_i = np.ones((batch_size, 1)) * i
+                ac_i = torch.tensor([[i] for _ in range(batch_size)]).to(ptu.device)
                 q_a_i = self.get_qvals(self.actor.critic, ob_no, ac_i)
                 log_p_i = ptu.to_numpy(dist.log_prob(ptu.from_numpy(ac_i)).squeeze())
                 vals.append(q_a_i * log_p_i)

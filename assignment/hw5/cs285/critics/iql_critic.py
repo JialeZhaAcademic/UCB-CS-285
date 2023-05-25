@@ -55,14 +55,15 @@ class IQLCritic(BaseCritic):
             self.v_optimizer,
             self.optimizer_spec.learning_rate_schedule,
         )
+        self.v_net.to(ptu.device)
         self.iql_expectile = hparams['iql_expectile']
 
     def expectile_loss(self, diff):
         """
         Implement expectile loss on the difference between q and v
         """
-        loss = torch.abs(self.iql_expectile - (diff <= 0))
-        return loss.mean()
+        weight = torch.where(diff > 0, self.iql_expectile, 1 - self.iql_expectile)
+        return weight * (diff**2)
 
     def update_v(self, ob_no, ac_na):
         """
@@ -74,7 +75,7 @@ class IQLCritic(BaseCritic):
 
         ### YOUR CODE HERE ###
         qa_values = self.q_net(ob_no)
-        q_values = torch.gather(qa_values, 1, ac_na.unsqueeze(1)).sequeeze()
+        q_values = torch.gather(qa_values, 1, ac_na.unsqueeze(1)).squeeze()
         values = self.v_net(ob_no)
         diff = q_values - values
         value_loss = self.expectile_loss(diff)

@@ -63,7 +63,7 @@ class IQLCritic(BaseCritic):
         Implement expectile loss on the difference between q and v
         """
         weight = torch.where(diff > 0, self.iql_expectile, 1 - self.iql_expectile)
-        return weight * (diff**2)
+        return torch.mean(weight * (diff**2))
 
     def update_v(self, ob_no, ac_na):
         """
